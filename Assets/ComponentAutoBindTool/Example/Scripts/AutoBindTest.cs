@@ -11,13 +11,14 @@ public partial class AutoBindTest : MonoBehaviour
     void Start()
     {
         GetBindComponents(gameObject);
-        m_Btn_Test2.onClick.AddListener(OnBtnClick);
+        
+        view.btnTest2.onClick.AddListener(OnBtnClick);
     }
 
     private void OnBtnClick()
     {
         count++;
-        m_Txt_Test3.text = "点击了按钮" + count + "次";
-        m_Img_Test1.gameObject.SetActive(!m_Img_Test1.gameObject.activeInHierarchy);
+        view.txtTest3.text = "点击了按钮" + count + "次";
+        view.imgTest1.gameObject.SetActive(!view.imgTest1.gameObject.activeInHierarchy);
     }
 }
