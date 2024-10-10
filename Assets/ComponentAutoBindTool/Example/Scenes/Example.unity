@@ -1650,26 +1650,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   BindDatas:
-  - Name: imgTest1
-    BindCom: {fileID: 3031567496786292501}
   - Name: btnTest2
     BindCom: {fileID: 3031567497652466427}
-  - Name: txtTest3
-    BindCom: {fileID: 3031567498471077977}
   - Name: dropTest4
     BindCom: {fileID: 506941056}
+  - Name: imgTest1
+    BindCom: {fileID: 3031567496786292501}
   - Name: imgTest4
     BindCom: {fileID: 506941057}
+  - Name: txtTest3
+    BindCom: {fileID: 3031567498471077977}
   m_ClassName: AutoBindTest
   m_Namespace: 
   m_targetScript: {fileID: 3031567497224880949}
   m_CodePath: Assets\ComponentAutoBindTool\Example\Scripts
   m_BindComs:
-  - {fileID: 3031567496786292501}
   - {fileID: 3031567497652466427}
-  - {fileID: 3031567498471077977}
   - {fileID: 506941056}
+  - {fileID: 3031567496786292501}
   - {fileID: 506941057}
+  - {fileID: 3031567498471077977}
 --- !u!114 &3031567497224880949
 MonoBehaviour:
   m_ObjectHideFlags: 0
