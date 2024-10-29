@@ -10,8 +10,7 @@ namespace ComponentAutoBindTool.Scripts.Editor
         /// <summary>
         /// 默认组件映射
         /// </summary>
-        // [DisplayOnly] 
-        public Dictionary<string, string> defaultComponentKeyMap = new()
+        public readonly Dictionary<string, string> DefaultComponentKeyMap = new()
             {
                 { "Tf", "Transform" },
                 { "OAni", "Animation" },

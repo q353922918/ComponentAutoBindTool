@@ -30,6 +30,7 @@ namespace AutoBindTool.Scripts.Editor
         private int m_HelperTypeNameIndex;
 
         private AutoBindGlobalSetting m_Setting;
+        private AutoBindKeyMapSetting m_KeyMapSetting;
 
         private SerializedProperty m_targetScript;
         private SerializedProperty m_Namespace;
@@ -44,22 +45,37 @@ namespace AutoBindTool.Scripts.Editor
 
             m_HelperTypeNames = GetTypeNames(typeof(IAutoBindRuleHelper), s_AssemblyNames);
 
-            string[] paths = AssetDatabase.FindAssets("t:AutoBindGlobalSetting");
+            string[] paths = AssetDatabase.FindAssets($"t:{nameof(AutoBindGlobalSetting)}");
             if (paths.Length == 0)
             {
-                Debug.LogError("不存在AutoBindGlobalSetting");
+                Debug.LogError($"不存在 {nameof(AutoBindGlobalSetting)}");
                 return;
             }
 
             if (paths.Length > 1)
             {
-                Debug.LogError("AutoBindGlobalSetting数量大于1");
+                Debug.LogError($"{nameof(AutoBindGlobalSetting)} 数量大于1");
                 return;
             }
 
             string path = AssetDatabase.GUIDToAssetPath(paths[0]);
             m_Setting = AssetDatabase.LoadAssetAtPath<AutoBindGlobalSetting>(path);
+            
+            string[] keyMapPaths = AssetDatabase.FindAssets($"t:{nameof(AutoBindKeyMapSetting)}");
+            if (keyMapPaths.Length == 0)
+            {
+                Debug.LogError($"不存在 {nameof(AutoBindKeyMapSetting)}");
+                return;
+            }
 
+            if (keyMapPaths.Length > 1)
+            {
+                Debug.LogError($"{nameof(AutoBindKeyMapSetting)} 数量大于1");
+                return;
+            }
+
+            string keyMapPath = AssetDatabase.GUIDToAssetPath(keyMapPaths[0]);
+            m_KeyMapSetting = AssetDatabase.LoadAssetAtPath<AutoBindKeyMapSetting>(keyMapPath);
 
             m_targetScript = serializedObject.FindProperty("m_targetScript");
             m_Namespace = serializedObject.FindProperty("m_Namespace");
@@ -86,7 +102,7 @@ namespace AutoBindTool.Scripts.Editor
 
             DrawTopButton();
 
-            DrawHelperSelect();
+            // DrawHelperSelect();
 
             DrawSetting();
 
@@ -121,7 +137,7 @@ namespace AutoBindTool.Scripts.Editor
                 var groupB = new List<string>();
                 var addToGroupA = true;
 
-                foreach (var item in m_Target.RuleHelper.GetPrefixesDict())
+                foreach (var item in m_KeyMapSetting.DefaultComponentKeyMap)
                 {
                     string formattedItem =
                         $"{{ \"<color=white>{item.Key}</color>\", \"<color=red>{item.Value}</color>\" }}";
@@ -136,6 +152,38 @@ namespace AutoBindTool.Scripts.Editor
 
                     addToGroupA = !addToGroupA;
                 }
+                
+                foreach (var item in m_KeyMapSetting.extraComponentKeyMap)
+                {
+                    string formattedItem =
+                        $"{{ \"<color=white>{item.Key}</color>\", \"<color=red>{item.Value}</color>\" }}";
+                    if (addToGroupA)
+                    {
+                        groupA.Add(formattedItem);
+                    }
+                    else
+                    {
+                        groupB.Add(formattedItem);
+                    }
+
+                    addToGroupA = !addToGroupA;
+                }
+                
+                // foreach (var item in m_Target.RuleHelper.GetPrefixesDict())
+                // {
+                //     string formattedItem =
+                //         $"{{ \"<color=white>{item.Key}</color>\", \"<color=red>{item.Value}</color>\" }}";
+                //     if (addToGroupA)
+                //     {
+                //         groupA.Add(formattedItem);
+                //     }
+                //     else
+                //     {
+                //         groupB.Add(formattedItem);
+                //     }
+                //
+                //     addToGroupA = !addToGroupA;
+                // }
                 
                 EditorGUILayout.BeginVertical();
                 
@@ -275,7 +323,7 @@ namespace AutoBindTool.Scripts.Editor
                 m_TempFiledNames.Clear();
                 m_TempComponentTypeNames.Clear();
 
-                if (m_Target.RuleHelper.IsValidBind(child, m_TempFiledNames, m_TempComponentTypeNames))
+                if (IsValidBind(child, m_TempFiledNames, m_TempComponentTypeNames))//m_Target.RuleHelper.
                 {
                     for (int i = 0; i < m_TempFiledNames.Count; i++)
                     {
@@ -293,6 +341,37 @@ namespace AutoBindTool.Scripts.Editor
             }
 
             SyncBindComs();
+        }
+        
+        private bool IsValidBind(Transform target, List<string> filedNames, List<string> componentTypeNames)
+        {
+            string[] strArray = target.name.Split('_');
+
+            if (strArray.Length == 1)
+            {
+                return false;
+            }
+
+            string filedName = strArray[strArray.Length - 1];
+
+            for (int i = 0; i < strArray.Length - 1; i++)
+            {
+                string str = strArray[i];
+                string comName;
+                if (m_KeyMapSetting.DefaultComponentKeyMap.TryGetValue(str, out comName) ||
+                    m_KeyMapSetting.extraComponentKeyMap.TryGetValue(str, out comName))
+                {
+                    filedNames.Add($"{str}_{filedName}");
+                    componentTypeNames.Add(comName);
+                }
+                else
+                {
+                    Debug.LogError($"{target.name}的命名中{str}不存在对应的组件类型，绑定失败");
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -557,7 +636,7 @@ namespace AutoBindTool.Scripts.Editor
 
             using (StreamWriter sw = new StreamWriter($"{codePath}/{className}.BindComponents.cs"))
             {
-                if (m_HelperTypeName == nameof(CustomAutoBindRuleHelper))
+                // if (m_HelperTypeName == nameof(CustomAutoBindRuleHelper))
                     sw.WriteLine("using System;");
                 sw.WriteLine($"using {m_Target.GetType().Namespace};");
                 sw.WriteLine("using UnityEngine;");
@@ -585,45 +664,45 @@ namespace AutoBindTool.Scripts.Editor
                 sw.WriteLine("\t{");
                 sw.WriteLine("");
 
-                switch (m_HelperTypeName)
-                {
-                    case nameof(DefaultAutoBindRuleHelper):
-                        //组件字段
-                        foreach (BindData data in m_Target.BindDatas)
-                        {
-                            data.Name = data.Name.Replace("_", "");
-                            data.Name = Regex.Replace(data.Name, "^[A-Z]", m => m.Value.ToLower());
-                            sw.WriteLine($"\t\tprivate {data.BindCom.GetType().Name} _{data.Name};");
-                        }
-                        sw.WriteLine("");
-
-                        sw.WriteLine("\t\tprivate void GetBindComponents(GameObject go)");
-                        sw.WriteLine("\t\t{");
-
-                        //获取autoBindTool上的Component
-                        sw.WriteLine($"\t\t\tComponentAutoBindTool autoBindTool = go.GetComponent<ComponentAutoBindTool>();");
-                        sw.WriteLine("");
-
-                        //根据索引获取
-                        for (int i = 0; i < m_Target.BindDatas.Count; i++)
-                        {
-                            BindData data = m_Target.BindDatas[i];
-                            // 将每个单词的首字母小写
-                            string filedName = $"_{data.Name}";
-                            sw.WriteLine(
-                                $"\t\t\t{filedName} = autoBindTool.GetBindComponent<{data.BindCom.GetType().Name}>({i});");
-                        }
-
-                        sw.WriteLine("\t\t}");
-
-                        sw.WriteLine("\t}");
-
-                        if (!string.IsNullOrEmpty(m_Target.Namespace))
-                        {
-                            sw.WriteLine("}");
-                        }
-                        break;
-                    case nameof(CustomAutoBindRuleHelper):
+                // switch (m_HelperTypeName)
+                // {
+                    // case nameof(DefaultAutoBindRuleHelper):
+                    //     //组件字段
+                    //     foreach (BindData data in m_Target.BindDatas)
+                    //     {
+                    //         data.Name = data.Name.Replace("_", "");
+                    //         data.Name = Regex.Replace(data.Name, "^[A-Z]", m => m.Value.ToLower());
+                    //         sw.WriteLine($"\t\tprivate {data.BindCom.GetType().Name} _{data.Name};");
+                    //     }
+                    //     sw.WriteLine("");
+                    //
+                    //     sw.WriteLine("\t\tprivate void GetBindComponents(GameObject go)");
+                    //     sw.WriteLine("\t\t{");
+                    //
+                    //     //获取autoBindTool上的Component
+                    //     sw.WriteLine($"\t\t\tComponentAutoBindTool autoBindTool = go.GetComponent<ComponentAutoBindTool>();");
+                    //     sw.WriteLine("");
+                    //
+                    //     //根据索引获取
+                    //     for (int i = 0; i < m_Target.BindDatas.Count; i++)
+                    //     {
+                    //         BindData data = m_Target.BindDatas[i];
+                    //         // 将每个单词的首字母小写
+                    //         string filedName = $"_{data.Name}";
+                    //         sw.WriteLine(
+                    //             $"\t\t\t{filedName} = autoBindTool.GetBindComponent<{data.BindCom.GetType().Name}>({i});");
+                    //     }
+                    //
+                    //     sw.WriteLine("\t\t}");
+                    //
+                    //     sw.WriteLine("\t}");
+                    //
+                    //     if (!string.IsNullOrEmpty(m_Target.Namespace))
+                    //     {
+                    //         sw.WriteLine("}");
+                    //     }
+                    //     break;
+                    // case nameof(CustomAutoBindRuleHelper):
                         sw.WriteLine("\t\t[Serializable]");
                         sw.WriteLine("\t\tpublic class UIView");
                         sw.WriteLine("\t\t{");
@@ -646,7 +725,8 @@ namespace AutoBindTool.Scripts.Editor
                         sw.WriteLine("\t\t{");
 
                         //获取autoBindTool上的Component
-                        sw.WriteLine($"\t\t\tComponentAutoBindTool autoBindTool = go.GetComponent<ComponentAutoBindTool>();");
+                        sw.WriteLine(
+                            $"\t\t\t{typeof(ComponentAutoBindTool.Scripts.ComponentAutoBindTool).FullName} autoBindTool = go.GetComponent<{typeof(ComponentAutoBindTool.Scripts.ComponentAutoBindTool).FullName}>();");
                         sw.WriteLine("");
                         
                         sw.WriteLine("\t\t\tview = new UIView");
@@ -671,10 +751,10 @@ namespace AutoBindTool.Scripts.Editor
                         {
                             sw.WriteLine("}");
                         }
-                        break;
-                    default:
-                        break;
-                }
+                    //     break;
+                    // default:
+                    //     break;
+                // }
             }
 
             AssetDatabase.Refresh();

@@ -6,6 +6,7 @@ namespace ComponentAutoBindTool.Scripts
 {
     public class CustomAutoBindRuleHelper : IAutoBindRuleHelper
     {
+        // private AutoBindKeyMapSetting
         /// <summary>
         /// 命名前缀与类型的映射
         /// </summary>

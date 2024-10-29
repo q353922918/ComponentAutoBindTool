@@ -7,12 +7,12 @@ namespace ComponentAutoBindTool.Scripts.Editor
     [CustomEditor(typeof(AutoBindKeyMapSetting))]
     public class AutoBindKeyMapSettingEditor : UnityEditor.Editor
     {
-        private SerializedProperty m_ExtraComponentKeyMapProperty;
-        private bool m_ShowDefaultKeyMap = true; // 控制折叠状态
+        private SerializedProperty _extraComponentKeyMapProperty;
+        private bool _showDefaultKeyMap = true; // 控制折叠状态
 
         private void OnEnable()
         {
-            m_ExtraComponentKeyMapProperty = serializedObject.FindProperty("extraComponentKeyMap");
+            _extraComponentKeyMapProperty = serializedObject.FindProperty("extraComponentKeyMap");
         }
 
         public override void OnInspectorGUI()
@@ -22,12 +22,12 @@ namespace ComponentAutoBindTool.Scripts.Editor
             serializedObject.Update();
 
             // 显示可折叠的字典
-            m_ShowDefaultKeyMap = EditorGUILayout.Foldout(m_ShowDefaultKeyMap, 
+            _showDefaultKeyMap = EditorGUILayout.Foldout(_showDefaultKeyMap, 
                 "Default Component Key Map", true);
-            if (m_ShowDefaultKeyMap)
+            if (_showDefaultKeyMap)
             {
                 EditorGUI.indentLevel++; // 增加缩进
-                foreach (var keyValuePair in autoBindKeyMapSetting.defaultComponentKeyMap)
+                foreach (var keyValuePair in autoBindKeyMapSetting.DefaultComponentKeyMap)
                 {                    
                     EditorGUILayout.LabelField($"组件缩写: {keyValuePair.Key}", 
                         $"组件名称: {keyValuePair.Value}");
@@ -36,7 +36,7 @@ namespace ComponentAutoBindTool.Scripts.Editor
             }
 
             // 显示可编辑字典
-            EditorGUILayout.PropertyField(m_ExtraComponentKeyMapProperty, true);
+            EditorGUILayout.PropertyField(_extraComponentKeyMapProperty, true);
 
             serializedObject.ApplyModifiedProperties();
         }

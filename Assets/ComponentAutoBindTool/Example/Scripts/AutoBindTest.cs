@@ -1,24 +1,25 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public partial class AutoBindTest : MonoBehaviour
+namespace ComponentAutoBindTool.Example.Scripts
 {
-
-    private int count = 0;
-
-
-    void Start()
+    public partial class AutoBindTest : MonoBehaviour
     {
-        GetBindComponents(gameObject);
-        
-        view.btnTest2.onClick.AddListener(OnBtnClick);
-    }
 
-    private void OnBtnClick()
-    {
-        count++;
-        view.txtTest3.text = "点击了按钮" + count + "次";
-        view.imgTest1.gameObject.SetActive(!view.imgTest1.gameObject.activeInHierarchy);
+        private int count = 0;
+
+
+        // void Start()
+        // {
+        //     GetBindComponents(gameObject);
+        //     
+        //     view.btnTest2.onClick.AddListener(OnBtnClick);
+        // }
+        //
+        // private void OnBtnClick()
+        // {
+        //     count++;
+        //     view.txtTest3.text = "点击了按钮" + count + "次";
+        //     view.imgTest1.gameObject.SetActive(!view.imgTest1.gameObject.activeInHierarchy);
+        // }
     }
 }
