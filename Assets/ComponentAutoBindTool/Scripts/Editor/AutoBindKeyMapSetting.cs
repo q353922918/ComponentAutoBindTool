@@ -1,7 +1,7 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace ComponentAutoBindTool.Scripts.Editor
 {
@@ -10,7 +10,8 @@ namespace ComponentAutoBindTool.Scripts.Editor
         /// <summary>
         /// 默认组件映射
         /// </summary>
-        public GenericDictionary<string, string> defaultComponentKeyMap = new()
+        // [DisplayOnly] 
+        public Dictionary<string, string> defaultComponentKeyMap = new()
             {
                 { "Tf", "Transform" },
                 { "OAni", "Animation" },
@@ -43,7 +44,7 @@ namespace ComponentAutoBindTool.Scripts.Editor
             };
         
         public GenericDictionary<string, string> extraComponentKeyMap;
-        
+
         [MenuItem("自动绑定UI组件/创建组件映射文件")]
         private static void CreateAutoBindKeyMapSetting()
         {

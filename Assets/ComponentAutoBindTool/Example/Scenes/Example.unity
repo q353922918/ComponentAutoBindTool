@@ -1312,6 +1312,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2be149a1aa2148e28dda297dd482375d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  myInt: 0
 --- !u!1 &1912266961
 GameObject:
   m_ObjectHideFlags: 0
@@ -1638,7 +1639,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3031567497224880956}
   - component: {fileID: 3031567497224880949}
-  - component: {fileID: 3031567497224880948}
   m_Layer: 5
   m_Name: AutoBindTest
   m_TagString: Untagged
@@ -1646,39 +1646,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &3031567497224880948
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3031567497224880947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57eb7c15612322c4b929a325ad4bc16a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  BindDatas:
-  - Name: btnTest2
-    BindCom: {fileID: 3031567497652466427}
-  - Name: dropTest4
-    BindCom: {fileID: 506941056}
-  - Name: imgTest1
-    BindCom: {fileID: 3031567496786292501}
-  - Name: imgTest4
-    BindCom: {fileID: 506941057}
-  - Name: txtTest3
-    BindCom: {fileID: 3031567498471077977}
-  m_ClassName: AutoBindTest
-  m_Namespace: 
-  m_targetScript: {fileID: 3031567497224880949}
-  m_CodePath: Assets\ComponentAutoBindTool\Example\Scripts
-  m_BindComs:
-  - {fileID: 3031567497652466427}
-  - {fileID: 506941056}
-  - {fileID: 3031567496786292501}
-  - {fileID: 506941057}
-  - {fileID: 3031567498471077977}
 --- !u!114 &3031567497224880949
 MonoBehaviour:
   m_ObjectHideFlags: 0

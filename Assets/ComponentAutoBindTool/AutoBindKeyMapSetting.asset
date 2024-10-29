@@ -12,59 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8c199ba46422b74584d754c21677991, type: 3}
   m_Name: AutoBindKeyMapSetting
   m_EditorClassIdentifier: 
-  defaultComponentKeyMap:
-    list:
-    - Key: Tf
-      Value: Transform
-    - Key: OAni
-      Value: Animation
-    - Key: NAni
-      Value: Animator
-    - Key: Rtf
-      Value: RectTransform
-    - Key: Cav
-      Value: Canvas
-    - Key: CGroup
-      Value: CanvasGroup
-    - Key: VLGroup
-      Value: VerticalLayoutGroup
-    - Key: HLGroup
-      Value: HorizontalLayoutGroup
-    - Key: GLGroup
-      Value: GridLayoutGroup
-    - Key: TGroup
-      Value: ToggleGroup
-    - Key: Btn
-      Value: Button
-    - Key: Img
-      Value: Image
-    - Key: RImg
-      Value: RawImage
-    - Key: Txt
-      Value: Text
-    - Key: Inf
-      Value: InputField
-    - Key: Sld
-      Value: Slider
-    - Key: Mask
-      Value: Mask
-    - Key: Mask2D
-      Value: RectMask2D
-    - Key: Tog
-      Value: Toggle
-    - Key: Sbr
-      Value: Scrollbar
-    - Key: SRect
-      Value: ScrollRect
-    - Key: Drop
-      Value: Dropdown
-    - Key: TMTxt
-      Value: TMPro.TextMeshProUGUI
-    - Key: TMDrop
-      Value: TMPro.TMP_Dropdown
-    - Key: TMInf
-      Value: TMPro.TMP_InputField
-    keyCollision: 0
   extraComponentKeyMap:
     list: []
     keyCollision: 0
