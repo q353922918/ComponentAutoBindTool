@@ -4,17 +4,19 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using ComponentAutoBindTool.Scripts;
+using ComponentAutoBindTool.Scripts.Editor;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
-using BindData = AutoBindTool.Scripts.ComponentAutoBindTool.BindData;
+using BindData = ComponentAutoBindTool.Scripts.ComponentAutoBindTool.BindData;
 
 namespace AutoBindTool.Scripts.Editor
 {
-    [CustomEditor(typeof(ComponentAutoBindTool))]
+    [CustomEditor(typeof(ComponentAutoBindTool.Scripts.ComponentAutoBindTool))]
     public class ComponentAutoBindToolInspector : UnityEditor.Editor
     {
-        private ComponentAutoBindTool m_Target;
+        private ComponentAutoBindTool.Scripts.ComponentAutoBindTool m_Target;
 
         private SerializedProperty m_BindDatas;
         private SerializedProperty m_BindComs;
@@ -36,7 +38,7 @@ namespace AutoBindTool.Scripts.Editor
 
         private void OnEnable()
         {
-            m_Target = (ComponentAutoBindTool)target;
+            m_Target = (ComponentAutoBindTool.Scripts.ComponentAutoBindTool)target;
             m_BindDatas = serializedObject.FindProperty("BindDatas");
             m_BindComs = serializedObject.FindProperty("m_BindComs");
 
@@ -246,7 +248,7 @@ namespace AutoBindTool.Scripts.Editor
             for (int i = 0; i < transform.childCount; i++)
             {
                 var curChildRoot = transform.GetChild(i);
-                if (curChildRoot.GetComponent<ComponentAutoBindTool>() || curChildRoot.name.Contains("NonRoot ==>"))//curChildRoot.name == "----NonRoot----" || 
+                if (curChildRoot.GetComponent<ComponentAutoBindTool.Scripts.ComponentAutoBindTool>() || curChildRoot.name.Contains("NonRoot ==>"))//curChildRoot.name == "----NonRoot----" || 
                 {
                     continue;
                 }
@@ -321,7 +323,7 @@ namespace AutoBindTool.Scripts.Editor
 
             foreach (GameObject go in Selection.gameObjects)
             {
-                ComponentAutoBindTool autoBindTool = go.GetComponent<ComponentAutoBindTool>();
+                ComponentAutoBindTool.Scripts.ComponentAutoBindTool autoBindTool = go.GetComponent<ComponentAutoBindTool.Scripts.ComponentAutoBindTool>();
                 if (autoBindTool.RuleHelper == null)
                 {
                     IAutoBindRuleHelper helper =

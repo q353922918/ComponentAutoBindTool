@@ -23,7 +23,7 @@ using UnityEngine.UI;
 
 		private void GetBindComponents(GameObject go)
 		{
-			ComponentAutoBindTool autoBindTool = go.GetComponent<ComponentAutoBindTool>();
+			ComponentAutoBindTool.Scripts.ComponentAutoBindTool autoBindTool = go.GetComponent<ComponentAutoBindTool.Scripts.ComponentAutoBindTool>();
 
 			view = new UIView
 			{

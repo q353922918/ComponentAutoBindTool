@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace AutoBindTool.Scripts.Editor
+namespace ComponentAutoBindTool.Scripts.Editor
 {
     /// <summary>
     /// 自动绑定全局设置
@@ -42,11 +42,9 @@ namespace AutoBindTool.Scripts.Editor
                 EditorUtility.DisplayDialog("警告", $"已存在AutoBindGlobalSetting，路径:{path}", "确认");
                 return;
             }
-     
-        
 
             AutoBindGlobalSetting setting = CreateInstance<AutoBindGlobalSetting>();
-            AssetDatabase.CreateAsset(setting, "Assets/AutoBindGlobalSetting.asset");
+            AssetDatabase.CreateAsset(setting, "Assets/ComponentAutoBindTool/AutoBindGlobalSetting");
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }

@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using AutoBindTool.Scripts;
 using UnityEngine;
 
-namespace AutoBindTool.Scripts
+namespace ComponentAutoBindTool.Scripts
 {
     /// <summary>
     /// 组件自动绑定工具

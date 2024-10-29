@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace AutoBindTool.Scripts.Editor
+namespace ComponentAutoBindTool.Scripts.Editor
 {
     [CustomEditor(typeof(AutoBindGlobalSetting))]
     public class AutoBindGlobalSettingInspector : UnityEditor.Editor
