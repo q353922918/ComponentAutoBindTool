@@ -13,6 +13,8 @@ AutoBindGlobalSetting.asset为默认设置文件，可放置于Asset目录下任
 
 --------------------------------------粗糙的增加一些编辑的操作--------------------------------------
 
+Unity 6000.0.23f1
+
 删除了RuleHelper的选择，创建了一个组件缩写和组件的映射SO资源文件，方便修改
 
 ![e97e80d0454c98682f119bf85c2d279](https://github.com/user-attachments/assets/ee23484c-d4c4-4170-8511-d662c9157b2e)
