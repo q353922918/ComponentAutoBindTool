@@ -13,7 +13,5 @@ MonoBehaviour:
   m_Name: AutoBindKeyMapSetting
   m_EditorClassIdentifier: 
   extraComponentKeyMap:
-    list:
-    - Key: LeanBtn
-      Value: LeanButton
+    list: []
     keyCollision: 0

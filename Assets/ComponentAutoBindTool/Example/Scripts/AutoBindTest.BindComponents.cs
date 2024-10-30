@@ -3,7 +3,10 @@ using ComponentAutoBindTool.Scripts;
 using UnityEngine;
 using UnityEngine.UI;
 
-//自动生成于：2024/10/29 22:53:51
+//自动生成于：2024/10/30 21:29:56
+namespace ComponentAutoBindTool.Example.Scripts
+{
+
 	public partial class AutoBindTest
 	{
 
@@ -12,7 +15,6 @@ using UnityEngine.UI;
 		{
 			public Image imgTest1;
 			public Button btnTest2;
-			public Text txtTest3;
 			public Dropdown dropTest4;
 			public Image imgTest4;
 		}
@@ -29,9 +31,9 @@ using UnityEngine.UI;
 			{
 				imgTest1 = autoBindTool.GetBindComponent<Image>(0),
 				btnTest2 = autoBindTool.GetBindComponent<Button>(1),
-				txtTest3 = autoBindTool.GetBindComponent<Text>(2),
-				dropTest4 = autoBindTool.GetBindComponent<Dropdown>(3),
-				imgTest4 = autoBindTool.GetBindComponent<Image>(4),
+				dropTest4 = autoBindTool.GetBindComponent<Dropdown>(2),
+				imgTest4 = autoBindTool.GetBindComponent<Image>(3),
 			};
 		}
 	}
+}

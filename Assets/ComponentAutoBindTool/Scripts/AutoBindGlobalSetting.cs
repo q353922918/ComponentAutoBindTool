@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace ComponentAutoBindTool.Scripts.Editor
+namespace ComponentAutoBindTool.Scripts
 {
     /// <summary>
     /// 自动绑定全局设置
@@ -9,28 +9,18 @@ namespace ComponentAutoBindTool.Scripts.Editor
     public class AutoBindGlobalSetting : ScriptableObject
     {
         [SerializeField]
+        private string m_IgnoreStr = " !!! IGNORE !!!";
+        
+        [SerializeField]
         private string m_CodePath;
 
         [SerializeField]
         private string m_Namespace;
 
-        public string CodePath
-        {
-            get
-            {
-                return m_CodePath;
-            }
+        public string IgnoreStr => m_IgnoreStr;
+        public string CodePath => m_CodePath;
 
-        }
-
-        public string Namespace
-        {
-            get
-            {
-                return m_Namespace;
-            }
-      
-        }
+        public string Namespace => m_Namespace;
 
         [MenuItem("自动绑定UI组件/创建配置文件")]
         private static void CreateAutoBindGlobalSetting()
@@ -44,7 +34,7 @@ namespace ComponentAutoBindTool.Scripts.Editor
             }
 
             AutoBindGlobalSetting setting = CreateInstance<AutoBindGlobalSetting>();
-            AssetDatabase.CreateAsset(setting, "Assets/ComponentAutoBindTool/AutoBindGlobalSetting");
+            AssetDatabase.CreateAsset(setting, "Assets/ComponentAutoBindTool/AutoBindGlobalSetting.asset");
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }

@@ -122,7 +122,7 @@ namespace AutoBindTool.Scripts.Editor
             EditorGUILayout.BeginVertical();
 
             EditorGUILayout.BeginVertical();
-            GUILayout.Box("<color=red><===节点名称包含 NonRoot ==>, 不会被自动绑定组件检测===></color>", new GUIStyle() { richText = true });
+            GUILayout.Box($"<color=red><===节点名称包含 {m_Setting.IgnoreStr}, 不会被自动绑定组件检测===></color>", new GUIStyle() { richText = true });
             EditorGUILayout.EndVertical();
             
             // "组件前缀提示" 可折叠组
@@ -296,7 +296,8 @@ namespace AutoBindTool.Scripts.Editor
             for (int i = 0; i < transform.childCount; i++)
             {
                 var curChildRoot = transform.GetChild(i);
-                if (curChildRoot.GetComponent<ComponentAutoBindTool.Scripts.ComponentAutoBindTool>() || curChildRoot.name.Contains("NonRoot ==>"))//curChildRoot.name == "----NonRoot----" || 
+                if (curChildRoot.GetComponent<ComponentAutoBindTool.Scripts.ComponentAutoBindTool>() 
+                    || curChildRoot.name.Contains(m_Setting.IgnoreStr))//curChildRoot.name == "----NonRoot----" || ✦ SkipThisNode
                 {
                     continue;
                 }
