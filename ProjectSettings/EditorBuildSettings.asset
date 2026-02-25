@@ -5,7 +5,8 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/ComponentAutoBindTool/Example/Scenes/Example.unity
     guid: 271ecc7c4937e7d48ac3fdc74130b33c
   m_configObjects: {}
+  m_UseUCBPForAssetBundles: 0
