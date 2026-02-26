@@ -1,12 +1,15 @@
-﻿namespace Third_Party.ComponentAutoBindTool.Example.Scripts
-{
-    public partial class AutoBindTest : AutoBindTestBase
-    {
-        private void Start()
-        {
-            GetBindComponents(gameObject);
+﻿using Third_Party.ComponentAutoBindTool.Scripts.ViewCore;
+using VContainer;
 
-            view.txtTest3.text = "Hello World!";
+namespace Third_Party.ComponentAutoBindTool.Example.Scripts
+{
+    public partial class AutoBindTest : ViewLifetimeScope
+    {
+        protected override void Configure(IContainerBuilder builder)
+        {
+            base.Configure(builder);
+            
+            RegisterCommon<AutoBindTestPresenter>(builder, view);
         }
     }
 }

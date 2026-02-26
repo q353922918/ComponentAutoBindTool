@@ -3,13 +3,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using Third_Party.ComponentAutoBindTool.Scripts.ViewCore;
 
-//自动生成于：2026/2/25 12:07:09
+//自动生成于：2026/2/25 15:42:33
 namespace Third_Party.ComponentAutoBindTool.Example.Scripts
 {
-
 	public partial class AutoBindTest
 	{
-
 		[Serializable]
 		public class UIView : IUiViewComponent
 		{
@@ -19,6 +17,7 @@ namespace Third_Party.ComponentAutoBindTool.Example.Scripts
 			public Dropdown dropTest4;
 			public Image imgTest4;
 		}
+
 		/// <summary>
 		/// ========== UI组件 ==========
 		/// </summary>

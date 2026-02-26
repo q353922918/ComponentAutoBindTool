@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Policy;
 using System.Text.RegularExpressions;
+using HandlebarsDotNet;
 using ComponentAutoBindTool.Scripts;
 using ComponentAutoBindTool.Scripts.Editor;
 using NUnit.Framework;
@@ -63,7 +64,7 @@ namespace AutoBindTool.Scripts.Editor
 
             string path = AssetDatabase.GUIDToAssetPath(paths[0]);
             m_Setting = AssetDatabase.LoadAssetAtPath<AutoBindGlobalSetting>(path);
-            
+
             string[] keyMapPaths = AssetDatabase.FindAssets($"t:{nameof(AutoBindKeyMapSetting)}");
             if (keyMapPaths.Length == 0)
             {
@@ -104,8 +105,8 @@ namespace AutoBindTool.Scripts.Editor
             DrawTip();
 
             DrawBindComponent();
-            
-            
+
+
             DrawTopButton();
 
             // DrawHelperSelect();
@@ -130,9 +131,10 @@ namespace AutoBindTool.Scripts.Editor
             EditorGUILayout.BeginVertical();
 
             EditorGUILayout.BeginVertical();
-            GUILayout.Box("<color=red><===节点名称包含 NonRoot ==>, 不会被自动绑定组件检测===></color>", new GUIStyle() { richText = true });
+            GUILayout.Box("<color=red><===节点名称包含 NonRoot ==>, 不会被自动绑定组件检测===></color>",
+                new GUIStyle() { richText = true });
             EditorGUILayout.EndVertical();
-            
+
             // "组件前缀提示" 可折叠组
             var isGroupEnabledStrTip = isGroupEnabled ? "打开" : "未打开";
             isGroupEnabled =
@@ -160,7 +162,7 @@ namespace AutoBindTool.Scripts.Editor
 
                     addToGroupA = !addToGroupA;
                 }
-                
+
                 foreach (var item in m_KeyMapSetting.extraComponentKeyMap)
                 {
                     string formattedItem =
@@ -176,7 +178,7 @@ namespace AutoBindTool.Scripts.Editor
 
                     addToGroupA = !addToGroupA;
                 }
-                
+
                 // foreach (var item in m_Target.RuleHelper.GetPrefixesDict())
                 // {
                 //     string formattedItem =
@@ -192,9 +194,9 @@ namespace AutoBindTool.Scripts.Editor
                 //
                 //     addToGroupA = !addToGroupA;
                 // }
-                
+
                 EditorGUILayout.BeginVertical();
-                
+
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.BeginVertical();
                 GUILayout.Box(string.Join("\n", groupA.ToArray()), new GUIStyle() { richText = true });
@@ -219,11 +221,12 @@ namespace AutoBindTool.Scripts.Editor
         {
             // 开始一个垂直的组
             EditorGUILayout.BeginVertical();
-            
+
             // 可折叠组
             var isGroupEnabledStrTip = isComponentKvDataEnabled ? "显示" : "不显示";
             isComponentKvDataEnabled =
-                EditorGUILayout.BeginToggleGroup($"<===绑定的组件数据===>     状态:{isGroupEnabledStrTip}", isComponentKvDataEnabled);
+                EditorGUILayout.BeginToggleGroup($"<===绑定的组件数据===>     状态:{isGroupEnabledStrTip}",
+                    isComponentKvDataEnabled);
             EditorGUILayout.Space();
 
             if (isComponentKvDataEnabled)
@@ -327,10 +330,12 @@ namespace AutoBindTool.Scripts.Editor
             for (int i = 0; i < transform.childCount; i++)
             {
                 var curChildRoot = transform.GetChild(i);
-                if (curChildRoot.GetComponent<Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool>() || curChildRoot.name.Contains("NonRoot ==>"))//curChildRoot.name == "----NonRoot----" || 
+                if (curChildRoot.GetComponent<Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool>() ||
+                    curChildRoot.name.Contains("NonRoot ==>")) //curChildRoot.name == "----NonRoot----" || 
                 {
                     continue;
                 }
+
                 childRoots.Add(curChildRoot);
                 GetChildRoots(curChildRoot, ref childRoots);
             }
@@ -344,17 +349,17 @@ namespace AutoBindTool.Scripts.Editor
             m_BindDatas.ClearArray();
 
             // Transform[] childs = m_Target.gameObject.GetComponentsInChildren<Transform>(true);
-            
+
             var childRoots = new List<Transform>();
             GetChildRoots(m_Target.transform, ref childRoots);
             Transform[] childs = childRoots.ToArray();
-            
+
             foreach (Transform child in childs)
             {
                 m_TempFiledNames.Clear();
                 m_TempComponentTypeNames.Clear();
 
-                if (IsValidBind(child, m_TempFiledNames, m_TempComponentTypeNames))//m_Target.RuleHelper.
+                if (IsValidBind(child, m_TempFiledNames, m_TempComponentTypeNames)) //m_Target.RuleHelper.
                 {
                     for (int i = 0; i < m_TempFiledNames.Count; i++)
                     {
@@ -373,7 +378,7 @@ namespace AutoBindTool.Scripts.Editor
 
             SyncBindComs();
         }
-        
+
         private bool IsValidBind(Transform target, List<string> filedNames, List<string> componentTypeNames)
         {
             string[] strArray = target.name.Split('_');
@@ -410,7 +415,7 @@ namespace AutoBindTool.Scripts.Editor
         /// </summary>
         private void DrawHelperSelect()
         {
-            m_HelperTypeName = nameof(CustomAutoBindRuleHelper);//m_HelperTypeNames[0];
+            m_HelperTypeName = nameof(CustomAutoBindRuleHelper); //m_HelperTypeNames[0];
 
             if (m_Target.RuleHelper != null)
             {
@@ -433,7 +438,8 @@ namespace AutoBindTool.Scripts.Editor
 
             foreach (GameObject go in Selection.gameObjects)
             {
-                Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool autoBindTool = go.GetComponent<Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool>();
+                Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool autoBindTool =
+                    go.GetComponent<Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool>();
                 if (autoBindTool.RuleHelper == null)
                 {
                     IAutoBindRuleHelper helper =
@@ -483,6 +489,7 @@ namespace AutoBindTool.Scripts.Editor
                         {
                             Debug.LogError("scriptFolder is null");
                         }
+
                         m_CodePath.stringValue = scriptFolder.Substring("Assets".Length);
                     }
                     else
@@ -500,6 +507,7 @@ namespace AutoBindTool.Scripts.Editor
                     serializedObject.ApplyModifiedProperties();
                 }
             }
+
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
@@ -520,7 +528,7 @@ namespace AutoBindTool.Scripts.Editor
             // //     m_ClassName.stringValue = m_Target.gameObject.name;
             // // }
             // EditorGUILayout.EndHorizontal();
-            
+
             // if (!m_Setting.UseGlobalDefaultSavePath)
             {
                 EditorGUILayout.LabelField($"代码保存路径：{m_CodePath.stringValue}");
@@ -671,6 +679,50 @@ namespace AutoBindTool.Scripts.Editor
         }
 
 
+        private const string CodeTemplate =
+            @"using System;
+using UnityEngine;
+{{#each Namespaces}}
+using {{this}};
+{{/each}}
+using {{IUiViewComponentNamespace}};
+
+//自动生成于：{{GenTime}}
+{{#if HasNamespace}}
+namespace {{Namespace}}
+{
+{{/if}}
+	public partial class {{ClassName}}
+	{
+		[Serializable]
+		public class UIView : IUiViewComponent
+		{
+{{#each BindComponents}}
+			public {{Type}} {{Name}};
+{{/each}}
+		}
+
+		/// <summary>
+		/// ========== UI组件 ==========
+		/// </summary>
+		private UIView view;
+
+		protected override void GetBindComponents(GameObject go)
+		{
+			{{AutoBindToolFullTypeName}} autoBindTool = go.GetComponent<{{AutoBindToolFullTypeName}}>();
+
+			view = new UIView
+			{
+{{#each BindComponents}}
+				{{Name}} = autoBindTool.GetBindComponent<{{Type}}>({{Index}}),
+{{/each}}
+			};
+		}
+	}
+{{#if HasNamespace}}
+}
+{{/if}}";
+
         /// <summary>
         /// 生成自动绑定代码
         /// </summary>
@@ -692,146 +744,45 @@ namespace AutoBindTool.Scripts.Editor
                 Directory.CreateDirectory(codePath);
             }
 
-            using (StreamWriter sw = new StreamWriter($"{codePath}/{className}.BindComponents.cs"))
+            var namespaces = new HashSet<string>();
+            var bindComponents = new List<object>();
+
+            for (int i = 0; i < m_Target.BindDatas.Count; i++)
             {
-                // if (m_HelperTypeName == nameof(CustomAutoBindRuleHelper))
-                // sw.WriteLine("using System;");
-                var lst = new HashSet<string>();
-                foreach (BindData data in m_Target.BindDatas)
+                BindData data = m_Target.BindDatas[i];
+                if (data.BindCom != null)
                 {
-                    if (data.BindCom != null)
+                    namespaces.Add(data.BindCom.GetType().Namespace);
+
+                    string fieldName = data.Name.Replace("_", "");
+                    fieldName = Regex.Replace(fieldName, "^[A-Z]", m => m.Value.ToLower());
+
+                    bindComponents.Add(new
                     {
-                        var namespaceName = data.BindCom.GetType().Namespace;
-                        lst.Add(namespaceName);
-                    }
+                        Type = data.BindCom.GetType().Name,
+                        Name = fieldName,
+                        Index = i
+                    });
                 }
-
-                sw.WriteLine("using System;");
-                sw.WriteLine("using UnityEngine;");
-                foreach (var str in lst)
-                {
-                    sw.WriteLine($"using {str};");
-                }
-                sw.WriteLine($"using {typeof(IUiViewComponent).Namespace};");
-                
-                // sw.WriteLine($"using {m_Target.GetType().Namespace};");
-                // sw.WriteLine("using UnityEngine;");
-                // sw.WriteLine("using UnityEngine.UI;");
-                // //根据索引获取
-                // if (m_Target.BindDatas.Any(data => data.BindCom.GetType().Name == "TextMeshProUGUI"))
-                //     sw.WriteLine("using TMPro;");
-                // if (m_Target.BindDatas.Any(data => data.BindCom.GetType().Name == "LeanButton") || 
-                //     m_Target.BindDatas.Any(data => data.BindCom.GetType().Name == "LeanSwitch"))
-                //     sw.WriteLine("using Lean.Gui;");
-                sw.WriteLine("");
-
-                sw.WriteLine("//自动生成于：" + DateTime.Now);
-
-                if (!string.IsNullOrEmpty(m_Target.Namespace))
-                {
-                    //命名空间
-                    sw.WriteLine("namespace " + m_Target.Namespace);
-                    sw.WriteLine("{");
-                    sw.WriteLine("");
-                }
-
-                //类名
-                sw.WriteLine($"\tpublic partial class {className}");
-                sw.WriteLine("\t{");
-                sw.WriteLine("");
-
-                // switch (m_HelperTypeName)
-                // {
-                    // case nameof(DefaultAutoBindRuleHelper):
-                    //     //组件字段
-                    //     foreach (BindData data in m_Target.BindDatas)
-                    //     {
-                    //         data.Name = data.Name.Replace("_", "");
-                    //         data.Name = Regex.Replace(data.Name, "^[A-Z]", m => m.Value.ToLower());
-                    //         sw.WriteLine($"\t\tprivate {data.BindCom.GetType().Name} _{data.Name};");
-                    //     }
-                    //     sw.WriteLine("");
-                    //
-                    //     sw.WriteLine("\t\tprivate void GetBindComponents(GameObject go)");
-                    //     sw.WriteLine("\t\t{");
-                    //
-                    //     //获取autoBindTool上的Component
-                    //     sw.WriteLine($"\t\t\tComponentAutoBindTool autoBindTool = go.GetComponent<ComponentAutoBindTool>();");
-                    //     sw.WriteLine("");
-                    //
-                    //     //根据索引获取
-                    //     for (int i = 0; i < m_Target.BindDatas.Count; i++)
-                    //     {
-                    //         BindData data = m_Target.BindDatas[i];
-                    //         // 将每个单词的首字母小写
-                    //         string filedName = $"_{data.Name}";
-                    //         sw.WriteLine(
-                    //             $"\t\t\t{filedName} = autoBindTool.GetBindComponent<{data.BindCom.GetType().Name}>({i});");
-                    //     }
-                    //
-                    //     sw.WriteLine("\t\t}");
-                    //
-                    //     sw.WriteLine("\t}");
-                    //
-                    //     if (!string.IsNullOrEmpty(m_Target.Namespace))
-                    //     {
-                    //         sw.WriteLine("}");
-                    //     }
-                    //     break;
-                    // case nameof(CustomAutoBindRuleHelper):
-                        sw.WriteLine("\t\t[Serializable]");
-                        sw.WriteLine("\t\tpublic class UIView : IUiViewComponent");
-                        sw.WriteLine("\t\t{");
-                        //组件字段
-                        foreach (BindData data in m_Target.BindDatas)
-                        {
-                            data.Name = data.Name.Replace("_", "");
-                            data.Name = Regex.Replace(data.Name, "^[A-Z]", m => m.Value.ToLower());
-                            sw.WriteLine($"\t\t\tpublic {data.BindCom.GetType().Name} {data.Name};");
-                        }
-                        sw.WriteLine("\t\t}");
-                        sw.WriteLine("\t\t/// <summary>");
-                        sw.WriteLine("\t\t/// ========== UI组件 ==========");
-                        sw.WriteLine("\t\t/// </summary>");
-                        sw.WriteLine("\t\tprivate UIView view;");
-                        
-                        sw.WriteLine("");
-
-                        sw.WriteLine("\t\tprotected override void GetBindComponents(GameObject go)");
-                        sw.WriteLine("\t\t{");
-
-                        //获取autoBindTool上的Component
-                        sw.WriteLine(
-                            $"\t\t\t{typeof(Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool).FullName} autoBindTool = go.GetComponent<{typeof(Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool).FullName}>();");
-                        sw.WriteLine("");
-                        
-                        sw.WriteLine("\t\t\tview = new UIView");
-                        sw.WriteLine("\t\t\t{");
-
-                        //根据索引获取
-                        for (int i = 0; i < m_Target.BindDatas.Count; i++)
-                        {
-                            BindData data = m_Target.BindDatas[i];
-                            // 将每个单词的首字母小写
-                            string filedName = $"{data.Name}";
-                            sw.WriteLine(
-                                $"\t\t\t\t{filedName} = autoBindTool.GetBindComponent<{data.BindCom.GetType().Name}>({i}),");
-                        }
-                        sw.WriteLine("\t\t\t};");
-
-                        sw.WriteLine("\t\t}");
-
-                        sw.WriteLine("\t}");
-
-                        if (!string.IsNullOrEmpty(m_Target.Namespace))
-                        {
-                            sw.WriteLine("}");
-                        }
-                    //     break;
-                    // default:
-                    //     break;
-                // }
             }
+
+            var templateData = new
+            {
+                Namespaces = namespaces.OrderBy(n => n),
+                IUiViewComponentNamespace = typeof(IUiViewComponent).Namespace,
+                GenTime = DateTime.Now.ToString(),
+                HasNamespace = !string.IsNullOrEmpty(m_Target.Namespace),
+                Namespace = m_Target.Namespace,
+                ClassName = className,
+                BindComponents = bindComponents,
+                AutoBindToolFullTypeName = typeof(Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool)
+                    .FullName
+            };
+
+            var template = Handlebars.Compile(CodeTemplate);
+            var result = template(templateData);
+
+            File.WriteAllText($"{codePath}/{className}.BindComponents.cs", result);
 
             AssetDatabase.Refresh();
             EditorUtility.DisplayDialog("提示", "代码生成完毕", "OK");

@@ -1294,10 +1294,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1080, y: 2400}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -1676,6 +1676,8 @@ GameObject:
   - component: {fileID: 3031567497224880956}
   - component: {fileID: 3031567497224880957}
   - component: {fileID: 3031567497224880958}
+  - component: {fileID: 3031567497224880960}
+  - component: {fileID: 3031567497224880959}
   m_Layer: 5
   m_Name: AutoBindTest
   m_TagString: Untagged
@@ -1722,6 +1724,8 @@ MonoBehaviour:
     TypeName: 
   autoRun: 1
   autoInjectGameObjects: []
+  viewType: 0
+  destroyType: 0
 --- !u!114 &3031567497224880958
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1735,15 +1739,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   BindDatas:
-  - Name: imgTest1
+  - Name: Img_Test1
     BindCom: {fileID: 3031567496786292501}
-  - Name: btnTest2
+  - Name: Btn_Test2
     BindCom: {fileID: 3031567497652466427}
-  - Name: txtTest3
+  - Name: Txt_Test3
     BindCom: {fileID: 3031567498471077977}
-  - Name: dropTest4
+  - Name: Drop_Test4
     BindCom: {fileID: 506941056}
-  - Name: imgTest4
+  - Name: Img_Test4
     BindCom: {fileID: 506941057}
   m_ClassName: AutoBindTest
   m_Namespace: Third_Party.ComponentAutoBindTool.Example.Scripts
@@ -1755,6 +1759,46 @@ MonoBehaviour:
   - {fileID: 3031567498471077977}
   - {fileID: 506941056}
   - {fileID: 506941057}
+--- !u!114 &3031567497224880959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3031567497224880947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!223 &3031567497224880960
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3031567497224880947}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
 --- !u!114 &3031567497652466180
 MonoBehaviour:
   m_ObjectHideFlags: 0
