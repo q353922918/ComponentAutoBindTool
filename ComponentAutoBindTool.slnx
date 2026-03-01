@@ -1,0 +1,6 @@
+﻿<Solution>
+  <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="com.upscalebaby.generic-serializable-dictionary-editor.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="com.upscalebaby.generic-serializable-dictionary.csproj" />
+</Solution>
