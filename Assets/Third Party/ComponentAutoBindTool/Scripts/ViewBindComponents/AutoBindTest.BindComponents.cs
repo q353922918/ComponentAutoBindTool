@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Third_Party.ComponentAutoBindTool.Scripts.ViewCore;
 
-//自动生成于：2026/2/25 15:42:33
+//自动生成于：2026/3/1 20:16:34
 namespace Third_Party.ComponentAutoBindTool.Example.Scripts
 {
 	public partial class AutoBindTest
