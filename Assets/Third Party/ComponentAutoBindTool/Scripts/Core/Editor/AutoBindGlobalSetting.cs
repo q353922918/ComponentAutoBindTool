@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace ComponentAutoBindTool.Scripts.Editor
+namespace Third_Party.ComponentAutoBindTool.Scripts.Core.Editor
 {
     /// <summary>
     /// 自动绑定全局设置

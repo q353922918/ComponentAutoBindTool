@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -43,6 +44,40 @@ namespace Third_Party.ComponentAutoBindTool.Scripts.Core
         };
         
         public GenericDictionary<string, string> extraComponentKeyMap;
+
+        public bool TryGetComponentTypeName(string key, out string componentTypeName)
+        {
+            if (DefaultComponentKeyMap.TryGetValue(key, out componentTypeName))
+            {
+                return true;
+            }
+
+            if (extraComponentKeyMap != null && extraComponentKeyMap.TryGetValue(key, out componentTypeName))
+            {
+                return true;
+            }
+
+            componentTypeName = null;
+            return false;
+        }
+
+        public IEnumerable<KeyValuePair<string, string>> GetAllComponentKeyMaps()
+        {
+            foreach (KeyValuePair<string, string> item in DefaultComponentKeyMap.OrderBy(pair => pair.Key))
+            {
+                yield return item;
+            }
+
+            if (extraComponentKeyMap == null)
+            {
+                yield break;
+            }
+
+            foreach (KeyValuePair<string, string> item in extraComponentKeyMap.OrderBy(pair => pair.Key))
+            {
+                yield return item;
+            }
+        }
 
         [MenuItem("自动绑定UI组件/创建组件映射文件")]
         private static void CreateAutoBindKeyMapSetting()

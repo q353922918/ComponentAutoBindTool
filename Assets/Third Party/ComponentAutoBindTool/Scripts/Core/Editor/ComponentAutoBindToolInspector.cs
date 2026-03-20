@@ -1,21 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Security.Policy;
-using System.Text.RegularExpressions;
-using HandlebarsDotNet;
-using ComponentAutoBindTool.Scripts;
-using ComponentAutoBindTool.Scripts.Editor;
-using NUnit.Framework;
-using Third_Party.ComponentAutoBindTool.Scripts.Core;
-using Third_Party.ComponentAutoBindTool.Scripts.ViewCore;
 using UnityEditor;
 using UnityEngine;
-using BindData = Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool.BindData;
 
-namespace AutoBindTool.Scripts.Editor
+namespace Third_Party.ComponentAutoBindTool.Scripts.Core.Editor
 {
     [CustomEditor(typeof(Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool))]
     public class ComponentAutoBindToolInspector : UnityEditor.Editor
@@ -24,14 +11,7 @@ namespace AutoBindTool.Scripts.Editor
 
         private SerializedProperty m_BindDatas;
         private SerializedProperty m_BindComs;
-        private List<BindData> m_TempList = new List<BindData>();
-        private List<string> m_TempFiledNames = new List<string>();
-        private List<string> m_TempComponentTypeNames = new List<string>();
-
-        private string[] s_AssemblyNames = { "Assembly-CSharp" };
-        private string[] m_HelperTypeNames;
-        private string m_HelperTypeName;
-        private int m_HelperTypeNameIndex;
+        private SerializedProperty m_BindFieldNames;
 
         private AutoBindGlobalSetting m_Setting;
         private AutoBindKeyMapSetting m_KeyMapSetting;
@@ -46,40 +26,19 @@ namespace AutoBindTool.Scripts.Editor
             m_Target = (Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool)target;
             m_BindDatas = serializedObject.FindProperty("BindDatas");
             m_BindComs = serializedObject.FindProperty("m_BindComs");
+            m_BindFieldNames = serializedObject.FindProperty("m_BindFieldNames");
 
-            m_HelperTypeNames = GetTypeNames(typeof(IAutoBindRuleHelper), s_AssemblyNames);
-
-            string[] paths = AssetDatabase.FindAssets($"t:{nameof(AutoBindGlobalSetting)}");
-            if (paths.Length == 0)
+            m_Setting = AutoBindEditorAssetLocator.LoadSingletonAsset<AutoBindGlobalSetting>();
+            if (m_Setting == null)
             {
-                Debug.LogError($"不存在 {nameof(AutoBindGlobalSetting)}");
                 return;
             }
 
-            if (paths.Length > 1)
+            m_KeyMapSetting = AutoBindEditorAssetLocator.LoadSingletonAsset<AutoBindKeyMapSetting>();
+            if (m_KeyMapSetting == null)
             {
-                Debug.LogError($"{nameof(AutoBindGlobalSetting)} 数量大于1");
                 return;
             }
-
-            string path = AssetDatabase.GUIDToAssetPath(paths[0]);
-            m_Setting = AssetDatabase.LoadAssetAtPath<AutoBindGlobalSetting>(path);
-
-            string[] keyMapPaths = AssetDatabase.FindAssets($"t:{nameof(AutoBindKeyMapSetting)}");
-            if (keyMapPaths.Length == 0)
-            {
-                Debug.LogError($"不存在 {nameof(AutoBindKeyMapSetting)}");
-                return;
-            }
-
-            if (keyMapPaths.Length > 1)
-            {
-                Debug.LogError($"{nameof(AutoBindKeyMapSetting)} 数量大于1");
-                return;
-            }
-
-            string keyMapPath = AssetDatabase.GUIDToAssetPath(keyMapPaths[0]);
-            m_KeyMapSetting = AssetDatabase.LoadAssetAtPath<AutoBindKeyMapSetting>(keyMapPath);
 
             m_targetScript = serializedObject.FindProperty("m_targetScript");
             m_Namespace = serializedObject.FindProperty("m_Namespace");
@@ -95,6 +54,11 @@ namespace AutoBindTool.Scripts.Editor
             m_CodePath.stringValue =
                 string.IsNullOrEmpty(m_CodePath.stringValue) ? m_Setting.CodePath : m_CodePath.stringValue;
 
+            if (AutoBindSerializedBindingUtility.NeedsRuntimeBindingSync(m_BindDatas, m_BindComs, m_BindFieldNames))
+            {
+                AutoBindSerializedBindingUtility.SyncRuntimeBindingCaches(m_BindDatas, m_BindComs, m_BindFieldNames);
+            }
+
             serializedObject.ApplyModifiedProperties();
         }
 
@@ -102,19 +66,14 @@ namespace AutoBindTool.Scripts.Editor
         {
             serializedObject.Update();
 
-            DrawTip();
+            DrawHeaderSection();
+            AutoBindInspectorDrawer.DrawBindComponentFoldout(m_BindDatas, ref isComponentKvDataEnabled, DrawKvData);
+            AutoBindInspectorDrawer.DrawKeyMapTip(m_KeyMapSetting, ref isGroupEnabled);
 
-            DrawBindComponent();
-
-
-            DrawTopButton();
-
-            // DrawHelperSelect();
-
-            DrawSetting();
-
-            // DrawKvData();
-
+            if (serializedObject.hasModifiedProperties)
+            {
+                AutoBindSerializedBindingUtility.SyncRuntimeBindingCaches(m_BindDatas, m_BindComs, m_BindFieldNames);
+            }
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -122,223 +81,21 @@ namespace AutoBindTool.Scripts.Editor
         private bool isGroupEnabled;
         private bool isComponentKvDataEnabled;
 
-        /// <summary>
-        /// 绘制组件缩写前缀映射表
-        /// </summary>
-        private void DrawTip()
+        private void DrawHeaderSection()
         {
-            // 开始一个垂直的组
-            EditorGUILayout.BeginVertical();
-
-            EditorGUILayout.BeginVertical();
-            GUILayout.Box("<color=red><===节点名称包含 NonRoot ==>, 不会被自动绑定组件检测===></color>",
-                new GUIStyle() { richText = true });
-            EditorGUILayout.EndVertical();
-
-            // "组件前缀提示" 可折叠组
-            var isGroupEnabledStrTip = isGroupEnabled ? "打开" : "未打开";
-            isGroupEnabled =
-                EditorGUILayout.BeginToggleGroup($"<===组件缩写和组件名字映射表===>     状态:{isGroupEnabledStrTip}", isGroupEnabled);
-            EditorGUILayout.Space();
-
-            if (isGroupEnabled)
-            {
-                var groupA = new List<string>();
-                var groupB = new List<string>();
-                var addToGroupA = true;
-
-                foreach (var item in m_KeyMapSetting.DefaultComponentKeyMap)
-                {
-                    string formattedItem =
-                        $"{{ \"<color=white>{item.Key}</color>\", \"<color=red>{item.Value}</color>\" }}";
-                    if (addToGroupA)
-                    {
-                        groupA.Add(formattedItem);
-                    }
-                    else
-                    {
-                        groupB.Add(formattedItem);
-                    }
-
-                    addToGroupA = !addToGroupA;
-                }
-
-                foreach (var item in m_KeyMapSetting.extraComponentKeyMap)
-                {
-                    string formattedItem =
-                        $"{{ \"<color=white>{item.Key}</color>\", \"<color=red>{item.Value}</color>\" }}";
-                    if (addToGroupA)
-                    {
-                        groupA.Add(formattedItem);
-                    }
-                    else
-                    {
-                        groupB.Add(formattedItem);
-                    }
-
-                    addToGroupA = !addToGroupA;
-                }
-
-                // foreach (var item in m_Target.RuleHelper.GetPrefixesDict())
-                // {
-                //     string formattedItem =
-                //         $"{{ \"<color=white>{item.Key}</color>\", \"<color=red>{item.Value}</color>\" }}";
-                //     if (addToGroupA)
-                //     {
-                //         groupA.Add(formattedItem);
-                //     }
-                //     else
-                //     {
-                //         groupB.Add(formattedItem);
-                //     }
-                //
-                //     addToGroupA = !addToGroupA;
-                // }
-
-                EditorGUILayout.BeginVertical();
-
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.BeginVertical();
-                GUILayout.Box(string.Join("\n", groupA.ToArray()), new GUIStyle() { richText = true });
-                EditorGUILayout.EndVertical();
-
-                EditorGUILayout.BeginVertical();
-                GUILayout.Box(string.Join("\n", groupB.ToArray()), new GUIStyle() { richText = true });
-                EditorGUILayout.EndVertical();
-
-                EditorGUILayout.EndHorizontal();
-                EditorGUILayout.EndVertical();
-            }
-
-            // 结束 "组件前缀提示" 可折叠组
-            EditorGUILayout.EndToggleGroup();
-
-            // 增加垂直布局的高度
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            DrawActionSection();
+            GUILayout.Space(2f);
+            DrawSetting();
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawBindComponent()
+        private void DrawActionSection()
         {
-            // 开始一个垂直的组
-            EditorGUILayout.BeginVertical();
-
-            // 可折叠组
-            var isGroupEnabledStrTip = isComponentKvDataEnabled ? "显示" : "不显示";
-            isComponentKvDataEnabled =
-                EditorGUILayout.BeginToggleGroup($"<===绑定的组件数据===>     状态:{isGroupEnabledStrTip}",
-                    isComponentKvDataEnabled);
-            EditorGUILayout.Space();
-
-            if (isComponentKvDataEnabled)
-            {
-                DrawKvData();
-            }
-
-            // 结束 "组件前缀提示" 可折叠组
-            EditorGUILayout.EndToggleGroup();
-
-            // 增加垂直布局的高度
-            EditorGUILayout.EndVertical();
-        }
-
-        /// <summary>
-        /// 绘制顶部按钮
-        /// </summary>
-        private void DrawTopButton()
-        {
-            EditorGUILayout.BeginHorizontal();
-
-            if (GUILayout.Button("排序"))
-            {
-                Sort();
-            }
-
-            if (GUILayout.Button("全部删除"))
-            {
-                RemoveAll();
-            }
-
-            if (GUILayout.Button("删除空引用"))
-            {
-                RemoveNull();
-            }
-
-            if (GUILayout.Button("自动绑定组件"))
-            {
-                AutoBindComponent();
-            }
-
-            if (GUILayout.Button("生成绑定代码"))
-            {
-                GenAutoBindCode();
-            }
-
-            EditorGUILayout.EndHorizontal();
-        }
-
-        /// <summary>
-        /// 排序
-        /// </summary>
-        private void Sort()
-        {
-            m_TempList.Clear();
-            foreach (BindData data in m_Target.BindDatas)
-            {
-                m_TempList.Add(new BindData(data.Name, data.BindCom));
-            }
-
-            m_TempList.Sort((x, y) => { return string.Compare(x.Name, y.Name, StringComparison.Ordinal); });
-
-            m_BindDatas.ClearArray();
-            foreach (BindData data in m_TempList)
-            {
-                AddBindData(data.Name, data.BindCom);
-            }
-
-            SyncBindComs();
-        }
-
-        /// <summary>
-        /// 全部删除
-        /// </summary>
-        private void RemoveAll()
-        {
-            m_BindDatas.ClearArray();
-
-            SyncBindComs();
-        }
-
-        /// <summary>
-        /// 删除空引用
-        /// </summary>
-        private void RemoveNull()
-        {
-            for (int i = m_BindDatas.arraySize - 1; i >= 0; i--)
-            {
-                SerializedProperty element = m_BindDatas.GetArrayElementAtIndex(i).FindPropertyRelative("BindCom");
-                if (element.objectReferenceValue == null)
-                {
-                    m_BindDatas.DeleteArrayElementAtIndex(i);
-                }
-            }
-
-            SyncBindComs();
-        }
-
-        private void GetChildRoots(Transform transform, ref List<Transform> childRoots)
-        {
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                var curChildRoot = transform.GetChild(i);
-                if (curChildRoot.GetComponent<Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool>() ||
-                    curChildRoot.name.Contains("NonRoot ==>")) //curChildRoot.name == "----NonRoot----" || 
-                {
-                    continue;
-                }
-
-                childRoots.Add(curChildRoot);
-                GetChildRoots(curChildRoot, ref childRoots);
-            }
+            AutoBindInspectorDrawer.DrawActionSection(
+                HandleAutoBindAndValidate,
+                HandleGenerateCode,
+                HandleRemoveAll);
         }
 
         /// <summary>
@@ -346,116 +103,16 @@ namespace AutoBindTool.Scripts.Editor
         /// </summary>
         private void AutoBindComponent()
         {
-            m_BindDatas.ClearArray();
+            AutoBindScanResult scanResult = AutoBindHierarchyScanner.CollectBindings(m_Target, m_KeyMapSetting);
+            AutoBindSerializedBindingUtility.RebuildBindDatas(m_BindDatas, scanResult.BindDatas);
+            ApplySerializedChanges(true);
 
-            // Transform[] childs = m_Target.gameObject.GetComponentsInChildren<Transform>(true);
-
-            var childRoots = new List<Transform>();
-            GetChildRoots(m_Target.transform, ref childRoots);
-            Transform[] childs = childRoots.ToArray();
-
-            foreach (Transform child in childs)
+            if (scanResult.HasErrors)
             {
-                m_TempFiledNames.Clear();
-                m_TempComponentTypeNames.Clear();
-
-                if (IsValidBind(child, m_TempFiledNames, m_TempComponentTypeNames)) //m_Target.RuleHelper.
+                for (int i = 0; i < scanResult.Errors.Count; i++)
                 {
-                    for (int i = 0; i < m_TempFiledNames.Count; i++)
-                    {
-                        Component com = child.GetComponent(m_TempComponentTypeNames[i]);
-                        if (com == null)
-                        {
-                            Debug.LogError($"{child.name}上不存在{m_TempComponentTypeNames[i]}的组件");
-                        }
-                        else
-                        {
-                            AddBindData(m_TempFiledNames[i], child.GetComponent(m_TempComponentTypeNames[i]));
-                        }
-                    }
+                    Debug.LogError(scanResult.Errors[i], m_Target);
                 }
-            }
-
-            SyncBindComs();
-        }
-
-        private bool IsValidBind(Transform target, List<string> filedNames, List<string> componentTypeNames)
-        {
-            string[] strArray = target.name.Split('_');
-
-            if (strArray.Length == 1)
-            {
-                return false;
-            }
-
-            string filedName = strArray[strArray.Length - 1];
-
-            for (int i = 0; i < strArray.Length - 1; i++)
-            {
-                string str = strArray[i];
-                string comName;
-                if (m_KeyMapSetting.DefaultComponentKeyMap.TryGetValue(str, out comName) ||
-                    m_KeyMapSetting.extraComponentKeyMap.TryGetValue(str, out comName))
-                {
-                    filedNames.Add($"{str}_{filedName}");
-                    componentTypeNames.Add(comName);
-                }
-                else
-                {
-                    Debug.LogError($"{target.name}的命名中{str}不存在对应的组件类型，绑定失败");
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// 绘制辅助器选择框
-        /// </summary>
-        private void DrawHelperSelect()
-        {
-            m_HelperTypeName = nameof(CustomAutoBindRuleHelper); //m_HelperTypeNames[0];
-
-            if (m_Target.RuleHelper != null)
-            {
-                m_HelperTypeName = m_Target.RuleHelper.GetType().Name;
-
-                for (int i = 0; i < m_HelperTypeNames.Length; i++)
-                {
-                    if (m_HelperTypeName == m_HelperTypeNames[i])
-                    {
-                        m_HelperTypeNameIndex = i;
-                    }
-                }
-            }
-            else
-            {
-                IAutoBindRuleHelper helper =
-                    (IAutoBindRuleHelper)CreateHelperInstance(m_HelperTypeName, s_AssemblyNames);
-                m_Target.RuleHelper = helper;
-            }
-
-            foreach (GameObject go in Selection.gameObjects)
-            {
-                Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool autoBindTool =
-                    go.GetComponent<Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool>();
-                if (autoBindTool.RuleHelper == null)
-                {
-                    IAutoBindRuleHelper helper =
-                        (IAutoBindRuleHelper)CreateHelperInstance(m_HelperTypeName, s_AssemblyNames);
-                    autoBindTool.RuleHelper = helper;
-                }
-            }
-
-            int selectedIndex = EditorGUILayout.Popup("AutoBindRuleHelper", m_HelperTypeNameIndex, m_HelperTypeNames);
-            if (selectedIndex != m_HelperTypeNameIndex)
-            {
-                m_HelperTypeNameIndex = selectedIndex;
-                m_HelperTypeName = m_HelperTypeNames[selectedIndex];
-                IAutoBindRuleHelper helper =
-                    (IAutoBindRuleHelper)CreateHelperInstance(m_HelperTypeName, s_AssemblyNames);
-                m_Target.RuleHelper = helper;
             }
         }
 
@@ -464,93 +121,25 @@ namespace AutoBindTool.Scripts.Editor
         /// </summary>
         private void DrawSetting()
         {
-            EditorGUILayout.BeginHorizontal();
+            bool targetScriptChanged = false;
             if (m_targetScript != null)
             {
-                EditorGUILayout.PropertyField(m_targetScript, true);
-
-                var objectReferenceValue = m_targetScript.objectReferenceValue;
-                if (objectReferenceValue != null)
-                {
-                    var scriptType = objectReferenceValue.GetType();
-                    var namespaceName = scriptType.Namespace;
-                    var className = scriptType.Name;
-                    var scriptPath = AssetDatabase.FindAssets("t:MonoScript " + className) //objectReferenceValue.name
-                        .Select(AssetDatabase.GUIDToAssetPath)
-                        .FirstOrDefault();
-                    var scriptFolder = Path.GetDirectoryName(scriptPath);
-
-                    m_Namespace.stringValue = namespaceName;
-                    m_ClassName.stringValue = className;
-
-                    if (m_Setting.UseGlobalDefaultSavePath)
-                    {
-                        if (string.IsNullOrEmpty(scriptFolder))
-                        {
-                            Debug.LogError("scriptFolder is null");
-                        }
-
-                        m_CodePath.stringValue = scriptFolder.Substring("Assets".Length);
-                    }
-                    else
-                    {
-                        if (m_Setting.CodePath.StartsWith(Application.dataPath))
-                        {
-                            m_CodePath.stringValue = m_Setting.CodePath.Substring(Application.dataPath.Length);
-                        }
-                    }
-
-                    // Debug.Log("Namespace: " + namespaceName);
-                    // Debug.Log("Class Name: " + className);
-                    // Debug.Log("Script Path: " + scriptPath);
-
-                    serializedObject.ApplyModifiedProperties();
-                }
+                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.PropertyField(m_targetScript, new GUIContent("脚本"));
+                targetScriptChanged = EditorGUI.EndChangeCheck();
             }
 
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.BeginHorizontal();
-            // m_Namespace.stringValue = EditorGUILayout.TextField(new GUIContent("命名空间："), m_Namespace.stringValue);
-            EditorGUILayout.LabelField($"命名空间：{m_Namespace.stringValue}");
-            EditorGUILayout.LabelField($"类名：{m_ClassName.stringValue}");
-            // if (GUILayout.Button("默认设置"))
-            // {
-            //     m_Namespace.stringValue = m_Setting.Namespace;
-            // }
-            EditorGUILayout.EndHorizontal();
-
-            // EditorGUILayout.BeginHorizontal();
-            // // m_ClassName.stringValue = EditorGUILayout.TextField(new GUIContent("类名："), m_ClassName.stringValue);
-            // EditorGUILayout.LabelField($"类名：{m_ClassName.stringValue}");
-            // // if (GUILayout.Button("物体名"))
-            // // {
-            // //     m_ClassName.stringValue = m_Target.gameObject.name;
-            // // }
-            // EditorGUILayout.EndHorizontal();
-
-            // if (!m_Setting.UseGlobalDefaultSavePath)
+            if (targetScriptChanged || m_targetScript.objectReferenceValue != null)
             {
-                EditorGUILayout.LabelField($"代码保存路径：{m_CodePath.stringValue}");
-                // EditorGUILayout.LabelField(m_CodePath.stringValue);
-                // EditorGUILayout.BeginHorizontal();
-                // if (GUILayout.Button("选择路径"))
-                // {
-                //     string temp = m_CodePath.stringValue;
-                //     m_CodePath.stringValue = EditorUtility.OpenFolderPanel("选择代码保存路径", Application.dataPath, "");
-                //     if (string.IsNullOrEmpty(m_CodePath.stringValue))
-                //     {
-                //         m_CodePath.stringValue = temp;
-                //     }
-                // }
-                //
-                // if (GUILayout.Button("默认设置"))
-                // {
-                //     m_CodePath.stringValue = m_Setting.CodePath;
-                // }
-
-                // EditorGUILayout.EndHorizontal();
+                AutoBindTargetScriptSyncUtility.SyncFromTargetScript(m_targetScript, m_Namespace, m_ClassName, m_CodePath,
+                    m_Setting);
+                serializedObject.ApplyModifiedProperties();
             }
+
+            AutoBindInspectorDrawer.DrawSettingsSection(
+                m_Namespace.stringValue,
+                m_ClassName.stringValue,
+                m_CodePath.stringValue);
         }
 
         /// <summary>
@@ -558,170 +147,64 @@ namespace AutoBindTool.Scripts.Editor
         /// </summary>
         private void DrawKvData()
         {
-            //绘制key value数据
-
-            int needDeleteIndex = -1;
-
-            EditorGUILayout.BeginVertical();
-            SerializedProperty property;
-
-            for (int i = 0; i < m_BindDatas.arraySize; i++)
-            {
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField($"[{i}]", GUILayout.Width(25));
-                property = m_BindDatas.GetArrayElementAtIndex(i).FindPropertyRelative("Name");
-                property.stringValue = EditorGUILayout.TextField(property.stringValue, GUILayout.Width(150));
-                property = m_BindDatas.GetArrayElementAtIndex(i).FindPropertyRelative("BindCom");
-                property.objectReferenceValue =
-                    EditorGUILayout.ObjectField(property.objectReferenceValue, typeof(Component), true);
-
-                if (GUILayout.Button("X"))
-                {
-                    //将元素下标添加进删除list
-                    needDeleteIndex = i;
-                }
-
-                EditorGUILayout.EndHorizontal();
-            }
-
-            //删除data
+            int needDeleteIndex = AutoBindInspectorDrawer.DrawBindDataList(m_BindDatas);
             if (needDeleteIndex != -1)
             {
                 m_BindDatas.DeleteArrayElementAtIndex(needDeleteIndex);
-                SyncBindComs();
+                AutoBindSerializedBindingUtility.SyncRuntimeBindingCaches(m_BindDatas, m_BindComs, m_BindFieldNames);
             }
-
-            EditorGUILayout.EndVertical();
         }
 
-
-        /// <summary>
-        /// 添加绑定数据
-        /// </summary>
-        private void AddBindData(string name, Component bindCom)
+        private void ApplySerializedChanges(bool forceSyncRuntimeBindings = false)
         {
-            int index = m_BindDatas.arraySize;
-            m_BindDatas.InsertArrayElementAtIndex(index);
-            SerializedProperty element = m_BindDatas.GetArrayElementAtIndex(index);
-            element.FindPropertyRelative("Name").stringValue = name;
-            element.FindPropertyRelative("BindCom").objectReferenceValue = bindCom;
-        }
-
-        /// <summary>
-        /// 同步绑定数据
-        /// </summary>
-        private void SyncBindComs()
-        {
-            m_BindComs.ClearArray();
-
-            for (int i = 0; i < m_BindDatas.arraySize; i++)
+            if (forceSyncRuntimeBindings || serializedObject.hasModifiedProperties)
             {
-                SerializedProperty property = m_BindDatas.GetArrayElementAtIndex(i).FindPropertyRelative("BindCom");
-                m_BindComs.InsertArrayElementAtIndex(i);
-                m_BindComs.GetArrayElementAtIndex(i).objectReferenceValue = property.objectReferenceValue;
+                AutoBindSerializedBindingUtility.SyncRuntimeBindingCaches(m_BindDatas, m_BindComs, m_BindFieldNames);
             }
+
+            serializedObject.ApplyModifiedProperties();
+            serializedObject.Update();
         }
 
-        /// <summary>
-        /// 获取指定基类在指定程序集中的所有子类名称
-        /// </summary>
-        private string[] GetTypeNames(Type typeBase, string[] assemblyNames)
+        private void HandleRemoveAll()
         {
-            List<string> typeNames = new List<string>();
-            foreach (string assemblyName in assemblyNames)
-            {
-                Assembly assembly = null;
-                try
-                {
-                    assembly = Assembly.Load(assemblyName);
-                }
-                catch
-                {
-                    continue;
-                }
-
-                if (assembly == null)
-                {
-                    continue;
-                }
-
-                Type[] types = assembly.GetTypes();
-                foreach (Type type in types)
-                {
-                    if (type.IsClass && !type.IsAbstract && typeBase.IsAssignableFrom(type))
-                    {
-                        typeNames.Add(type.FullName);
-                    }
-                }
-            }
-
-            typeNames.Sort();
-            return typeNames.ToArray();
+            ApplySerializedChanges();
+            m_BindDatas.ClearArray();
+            ApplySerializedChanges(true);
         }
 
-        /// <summary>
-        /// 创建辅助器实例
-        /// </summary>
-        private object CreateHelperInstance(string helperTypeName, string[] assemblyNames)
+        private void HandleAutoBindAndValidate()
         {
-            foreach (string assemblyName in assemblyNames)
-            {
-                Assembly assembly = Assembly.Load(assemblyName);
-
-                object instance = assembly.CreateInstance(helperTypeName);
-                if (instance != null)
-                {
-                    return instance;
-                }
-            }
-
-            return null;
+            ApplySerializedChanges();
+            AutoBindComponent();
+            ValidateBindingsAndNotify();
         }
 
+        private void HandleGenerateCode()
+        {
+            ApplySerializedChanges();
+            GenAutoBindCode();
+        }
 
-        private const string CodeTemplate =
-            @"using System;
-using UnityEngine;
-{{#each Namespaces}}
-using {{this}};
-{{/each}}
-using {{IUiViewComponentNamespace}};
+        private void ValidateBindingsAndNotify()
+        {
+            AutoBindValidationResult validationResult = AutoBindValidator.Validate(m_Target, m_Setting);
+            string report = validationResult.BuildReport();
+            string title = validationResult.IsValid ? "校验通过" : "校验失败";
+            string summary =
+                $"{title}。\n错误 {validationResult.ErrorCount} 项，警告 {validationResult.WarningCount} 项。\n\n{report}";
 
-//自动生成于：{{GenTime}}
-{{#if HasNamespace}}
-namespace {{Namespace}}
-{
-{{/if}}
-	public partial class {{ClassName}}
-	{
-		[Serializable]
-		public class UIView : IUiViewComponent
-		{
-{{#each BindComponents}}
-			public {{Type}} {{Name}};
-{{/each}}
-		}
+            if (validationResult.IsValid)
+            {
+                Debug.Log($"[{m_Target.name}] AutoBind 校验通过。\n{report}", m_Target);
+            }
+            else
+            {
+                Debug.LogError($"[{m_Target.name}] AutoBind 校验失败。\n{report}", m_Target);
+            }
 
-		/// <summary>
-		/// ========== UI组件 ==========
-		/// </summary>
-		private UIView view;
-
-		protected override void GetBindComponents(GameObject go)
-		{
-			{{AutoBindToolFullTypeName}} autoBindTool = go.GetComponent<{{AutoBindToolFullTypeName}}>();
-
-			view = new UIView
-			{
-{{#each BindComponents}}
-				{{Name}} = autoBindTool.GetBindComponent<{{Type}}>({{Index}}),
-{{/each}}
-			};
-		}
-	}
-{{#if HasNamespace}}
-}
-{{/if}}";
+            EditorUtility.DisplayDialog(title, summary, "OK");
+        }
 
         /// <summary>
         /// 生成自动绑定代码
@@ -729,61 +212,23 @@ namespace {{Namespace}}
         private void GenAutoBindCode()
         {
             GameObject go = m_Target.gameObject;
-
-            string className = !string.IsNullOrEmpty(m_Target.ClassName) ? m_Target.ClassName : go.name;
-            var fullPath = Application.dataPath + m_Target.CodePath;
-            Debug.Log(
-                $"m_Setting.UseGlobalDefaultSavePath: {m_Setting.UseGlobalDefaultSavePath}, m_Target.CodePath: {fullPath}");
-            string codePath = m_Setting.UseGlobalDefaultSavePath
-                ? fullPath
-                : m_Setting.CodePath;
-
-            if (!Directory.Exists(codePath))
+            AutoBindValidationResult validationResult = AutoBindValidator.Validate(m_Target, m_Setting);
+            string report = validationResult.BuildReport();
+            if (!validationResult.IsValid)
             {
-                Debug.Log($"{go.name}的代码保存路径{codePath}不存在，创建新的文件夹路径");
-                Directory.CreateDirectory(codePath);
+                Debug.LogError($"[{go.name}] AutoBind 生成前校验失败。\n{report}", go);
+                EditorUtility.DisplayDialog("生成失败",
+                    $"生成前校验未通过。\n错误 {validationResult.ErrorCount} 项，警告 {validationResult.WarningCount} 项。\n\n{report}",
+                    "OK");
+                return;
             }
 
-            var namespaces = new HashSet<string>();
-            var bindComponents = new List<object>();
-
-            for (int i = 0; i < m_Target.BindDatas.Count; i++)
+            if (validationResult.WarningCount > 0)
             {
-                BindData data = m_Target.BindDatas[i];
-                if (data.BindCom != null)
-                {
-                    namespaces.Add(data.BindCom.GetType().Namespace);
-
-                    string fieldName = data.Name.Replace("_", "");
-                    fieldName = Regex.Replace(fieldName, "^[A-Z]", m => m.Value.ToLower());
-
-                    bindComponents.Add(new
-                    {
-                        Type = data.BindCom.GetType().Name,
-                        Name = fieldName,
-                        Index = i
-                    });
-                }
+                Debug.LogWarning($"[{go.name}] AutoBind 生成前存在警告。\n{report}", go);
             }
 
-            var templateData = new
-            {
-                Namespaces = namespaces.OrderBy(n => n),
-                IUiViewComponentNamespace = typeof(IUiViewComponent).Namespace,
-                GenTime = DateTime.Now.ToString(),
-                HasNamespace = !string.IsNullOrEmpty(m_Target.Namespace),
-                Namespace = m_Target.Namespace,
-                ClassName = className,
-                BindComponents = bindComponents,
-                AutoBindToolFullTypeName = typeof(Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool)
-                    .FullName
-            };
-
-            var template = Handlebars.Compile(CodeTemplate);
-            var result = template(templateData);
-
-            File.WriteAllText($"{codePath}/{className}.BindComponents.cs", result);
-
+            AutoBindCodeGenerator.Generate(m_Target, m_Setting);
             AssetDatabase.Refresh();
             EditorUtility.DisplayDialog("提示", "代码生成完毕", "OK");
         }

@@ -1,9 +1,7 @@
-using Third_Party.ComponentAutoBindTool.Scripts.Core;
 using UnityEditor;
-using UnityEngine;
 
 #if UNITY_EDITOR
-namespace ComponentAutoBindTool.Scripts.Editor
+namespace Third_Party.ComponentAutoBindTool.Scripts.Core.Editor
 {
     [CustomEditor(typeof(AutoBindKeyMapSetting))]
     public class AutoBindKeyMapSettingEditor : UnityEditor.Editor

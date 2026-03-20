@@ -1,0 +1,16 @@
+{
+    "name": "Kogane.DebugLogger",
+    "rootNamespace": "",
+    "references": [
+        "GUID:0c974a68e04127c49a38992f00b41043"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -5,16 +5,27 @@ using VContainer.Unity;
 
 namespace Third_Party.ComponentAutoBindTool.Scripts.ViewCore
 {
-    public enum ViewType
+    public enum ViewLayer
     {
         /// <summary>
-        /// 菜单
+        /// 1. HUD / Bottom: 场景直接引用的常驻菜单（如主城的 HUD、关卡中的血条）。
         /// </summary>
-        Menu,
+        HUD = 500,
         /// <summary>
-        /// 弹窗
+        /// 2. Normal / Window: 基础弹窗（如背包、属性界面、商店）。
+        /// 这类界面最适合“栈”管理，打开新的会自动暂停旧的。
         /// </summary>
-        Panel,
+        Normal = 700,
+        /// <summary>
+        /// 3. Top / Modal: 模态确认框（如购买确认、系统提示、奖励领取）。
+        /// 置于所有 Normal 之上，具有独占性或覆盖性。
+        /// </summary>
+        Top = 1000,
+        /// <summary>
+        /// 4. System / Overlay: 系统级覆盖（如断线提示、Loading、全局通知）。
+        /// 最高优先级，不参与普通的入栈/出栈流程。
+        /// </summary>
+        System = 2000
     }
     
     public enum DestroyType
@@ -37,9 +48,9 @@ namespace Third_Party.ComponentAutoBindTool.Scripts.ViewCore
     [RequireComponent(typeof(Canvas))]
     [RequireComponent(typeof(GraphicRaycaster))]
     [RequireComponent(typeof(Third_Party.ComponentAutoBindTool.Scripts.Core.ComponentAutoBindTool))]
-    public class ViewLifetimeScope : LifetimeScope
+    public class ViewLifetimeScope : LifetimeScope, IAutoBindHost
     {
-        [SerializeField] public ViewType viewType;
+        [SerializeField] public ViewLayer viewLayer;
         [SerializeField] public DestroyType destroyType;
 
         /// <summary>
@@ -54,22 +65,22 @@ namespace Third_Party.ComponentAutoBindTool.Scripts.ViewCore
 
         protected override void Configure(IContainerBuilder builder)
         {
-            GetBindComponents(gameObject);
+            EnsureAutoBind(gameObject);
         }
 
-        protected virtual void GetBindComponents(GameObject go) { }
+        public virtual void EnsureAutoBind(GameObject go) { }
         
-        protected void RegisterCommon<T>(IContainerBuilder builder, IUiViewComponent iView)
+        protected RegistrationBuilder RegisterCommon<T>(IContainerBuilder builder, IUiViewComponent iView = null)
         {
-            CCDebug.GameLog($"{ViewName} 配置相关注入");
-            builder.RegisterInstance(iView).AsSelf();
-            builder.RegisterEntryPoint<T>().WithParameter("vb", ViewBundle);
+            CCDebug.Log($"{ViewName} 配置相关注入", LogType.System);
+            if (iView != null) builder.RegisterInstance(iView).AsSelf();
             builder.RegisterEntryPointExceptionHandler(Debug.LogError);
+            return builder.RegisterEntryPoint<T>().WithParameter(ViewBundle);
         }
         
         public virtual void Init(params object[] args)
         {
-            CCDebug.GameLog($"{ViewName} 设置数据");
+            CCDebug.Log($"{ViewName} 设置数据", LogType.System);
             ViewBundle.SetViewBundle(args);
         }
 
