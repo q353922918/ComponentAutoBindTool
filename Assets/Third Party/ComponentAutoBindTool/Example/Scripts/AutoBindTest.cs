@@ -8,7 +8,7 @@ namespace Third_Party.ComponentAutoBindTool.Example.Scripts
         protected override void Configure(IContainerBuilder builder)
         {
             base.Configure(builder);
-            
+            // 测试
             RegisterCommon<AutoBindTestPresenter>(builder, view);
         }
     }
